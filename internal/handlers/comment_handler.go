@@ -77,7 +77,6 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comment.Id = int64(len(h.comments) + 1)
 	comment.CreatedAt = time.Now()
 	comment.UpdatedAt = time.Now()
 

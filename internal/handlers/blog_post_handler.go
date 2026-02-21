@@ -58,7 +58,6 @@ func (h *BlogPostHandler) CreateBlogPost(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	post.Id = int64(len(h.posts) + 1)
 	post.CreatedAt = time.Now()
 	post.UpdatedAt = time.Now()
 

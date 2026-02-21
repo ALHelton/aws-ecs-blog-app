@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/guregu/null/v6"
 )
 
 type BlogPost struct {
@@ -12,7 +10,6 @@ type BlogPost struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt null.Time `json:"deleted_at"`
 }
 
 type Comment struct {
@@ -21,5 +18,4 @@ type Comment struct {
 	Content    string    `json:"content"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
-	DeletedAt  null.Time `json:"deleted_at"`
 }
