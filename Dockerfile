@@ -18,7 +18,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o main cmd/api/main.go
 
 # Step 2: Final lightweight image
-FROM alpine:latest
+FROM alpine:latest AS runner
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/

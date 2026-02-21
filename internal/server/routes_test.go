@@ -19,7 +19,7 @@ func TestHelloWorldHandler(t *testing.T) {
 
 	resp, err := http.Get(server.URL)
 	if err != nil {
-		t.Fatalf("error making request to server. Err: %v", err)
+		t.Fatalf("error making request: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -38,7 +38,8 @@ func TestHelloWorldHandler(t *testing.T) {
 }
 
 func TestGetBlogPosts(t *testing.T) {
-	h := handlers.NewBlogPostHandler()
+	db := setupTestDB(t)
+	h := handlers.NewBlogPostHandler(db)
 	server := httptest.NewServer(http.HandlerFunc(h.GetBlogPosts))
 	defer server.Close()
 
@@ -54,12 +55,13 @@ func TestGetBlogPosts(t *testing.T) {
 }
 
 func TestCreateBlogPost(t *testing.T) {
-	h := handlers.NewBlogPostHandler()
+	db := setupTestDB(t)
+	h := handlers.NewBlogPostHandler(db)
 	server := httptest.NewServer(http.HandlerFunc(h.CreateBlogPost))
 	defer server.Close()
 
-	blogPost := map[string]string{"title": "Test Blog Post", "content": "Test Content"}
-	body, _ := json.Marshal(blogPost)
+	post := map[string]string{"title": "Test Blog Post", "content": "Test Content"}
+	body, _ := json.Marshal(post)
 
 	resp, err := http.Post(server.URL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
@@ -73,7 +75,8 @@ func TestCreateBlogPost(t *testing.T) {
 }
 
 func TestGetBlogPost(t *testing.T) {
-	h := handlers.NewBlogPostHandler()
+	db := setupTestDB(t)
+	h := handlers.NewBlogPostHandler(db)
 
 	createServer := httptest.NewServer(http.HandlerFunc(h.CreateBlogPost))
 	blogPost := map[string]string{"title": "Test Blog Post", "content": "Test Content"}
@@ -98,7 +101,8 @@ func TestGetBlogPost(t *testing.T) {
 }
 
 func TestUpdateBlogPost(t *testing.T) {
-	h := handlers.NewBlogPostHandler()
+	db := setupTestDB(t)
+	h := handlers.NewBlogPostHandler(db)
 
 	createServer := httptest.NewServer(http.HandlerFunc(h.CreateBlogPost))
 	blogPost := map[string]string{"title": "Test Blog Post", "content": "Test Content"}
@@ -127,7 +131,8 @@ func TestUpdateBlogPost(t *testing.T) {
 }
 
 func TestDeleteBlogPost(t *testing.T) {
-	h := handlers.NewBlogPostHandler()
+	db := setupTestDB(t)
+	h := handlers.NewBlogPostHandler(db)
 
 	createServer := httptest.NewServer(http.HandlerFunc(h.CreateBlogPost))
 	blogPost := map[string]string{"title": "Test Blog Post", "content": "Test Content"}
@@ -152,8 +157,11 @@ func TestDeleteBlogPost(t *testing.T) {
 	}
 }
 
+// Comment Tests
+
 func TestGetComments(t *testing.T) {
-	h := handlers.NewCommentHandler()
+	db := setupTestDB(t)
+	h := handlers.NewCommentHandler(db)
 	server := httptest.NewServer(http.HandlerFunc(h.GetComments))
 	defer server.Close()
 
@@ -169,7 +177,8 @@ func TestGetComments(t *testing.T) {
 }
 
 func TestCreateComment(t *testing.T) {
-	h := handlers.NewCommentHandler()
+	db := setupTestDB(t)
+	h := handlers.NewCommentHandler(db)
 	server := httptest.NewServer(http.HandlerFunc(h.CreateComment))
 	defer server.Close()
 
@@ -188,7 +197,8 @@ func TestCreateComment(t *testing.T) {
 }
 
 func TestGetComment(t *testing.T) {
-	h := handlers.NewCommentHandler()
+	db := setupTestDB(t)
+	h := handlers.NewCommentHandler(db)
 
 	createServer := httptest.NewServer(http.HandlerFunc(h.CreateComment))
 	comment := map[string]interface{}{"blog_post_id": 1, "content": "Test Comment"}
@@ -213,7 +223,8 @@ func TestGetComment(t *testing.T) {
 }
 
 func TestUpdateComment(t *testing.T) {
-	h := handlers.NewCommentHandler()
+	db := setupTestDB(t)
+	h := handlers.NewCommentHandler(db)
 
 	createServer := httptest.NewServer(http.HandlerFunc(h.CreateComment))
 	comment := map[string]interface{}{"blog_post_id": 1, "content": "Test Comment"}
@@ -242,7 +253,8 @@ func TestUpdateComment(t *testing.T) {
 }
 
 func TestDeleteComment(t *testing.T) {
-	h := handlers.NewCommentHandler()
+	db := setupTestDB(t)
+	h := handlers.NewCommentHandler(db)
 
 	createServer := httptest.NewServer(http.HandlerFunc(h.CreateComment))
 	comment := map[string]interface{}{"blog_post_id": 1, "content": "Test Comment"}

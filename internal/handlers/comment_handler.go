@@ -4,44 +4,36 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"sync"
-	"time"
 
 	"aws-ecs-blog-app/internal/models"
 
 	"github.com/go-chi/chi/v5"
+	"gorm.io/gorm"
 )
 
 type CommentHandler struct {
-    mu    sync.Mutex
-    comments []models.Comment
+	db *gorm.DB
 }
 
-func NewCommentHandler() *CommentHandler {
-    return &CommentHandler{
-        comments: []models.Comment{},
-    }
+func NewCommentHandler(db *gorm.DB) *CommentHandler {
+	return &CommentHandler{db: db}
 }
 
 func (h *CommentHandler) GetComments(w http.ResponseWriter, r *http.Request) {
 	blogPostId, err := strconv.ParseInt(r.URL.Query().Get("blog_post_id"), 10, 64)
-    if err != nil {
-        http.Error(w, "invalid blog post id", http.StatusBadRequest)
-        return
-    }
+	if err != nil {
+		http.Error(w, "invalid blog post id", http.StatusBadRequest)
+		return
+	}
 
-    h.mu.Lock()
-    defer h.mu.Unlock()
+	var comments []models.Comment
+	if err := h.db.Where("blog_post_id = ?", blogPostId).Find(&comments).Error; err != nil {
+		http.Error(w, "error fetching comments", http.StatusInternalServerError)
+		return
+	}
 
-    var postComments []models.Comment
-    for _, c := range h.comments {
-        if c.BlogPostId == blogPostId {
-            postComments = append(postComments, c)
-        }
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(postComments)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comments)
 }
 
 func (h *CommentHandler) GetComment(w http.ResponseWriter, r *http.Request) {
@@ -51,18 +43,17 @@ func (h *CommentHandler) GetComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	for _, c := range h.comments {
-		if c.Id == id {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(c)
-			return
-		}
+	var comment models.Comment
+	if err := h.db.First(&comment, id).Error; err == gorm.ErrRecordNotFound {
+		http.Error(w, "comment not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "error fetching comment", http.StatusInternalServerError)
+		return
 	}
 
-	http.Error(w, "comment not found", http.StatusNotFound)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comment)
 }
 
 func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
@@ -77,13 +68,10 @@ func (h *CommentHandler) CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comment.CreatedAt = time.Now()
-	comment.UpdatedAt = time.Now()
-
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	h.comments = append(h.comments, comment)
+	if err := h.db.Create(&comment).Error; err != nil {
+		http.Error(w, "error creating comment", http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -97,26 +85,27 @@ func (h *CommentHandler) UpdateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updated models.Comment
-	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+	var comment models.Comment
+	if err := h.db.First(&comment, id).Error; err == gorm.ErrRecordNotFound {
+		http.Error(w, "comment not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "error fetching comment", http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	for i, c := range h.comments {
-		if c.Id == id {
-			h.comments[i].Content = updated.Content
-			h.comments[i].UpdatedAt = time.Now()
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(h.comments[i])
-			return
-		}
+	if err := h.db.Save(&comment).Error; err != nil {
+		http.Error(w, "error updating comment", http.StatusInternalServerError)
+		return
 	}
 
-	http.Error(w, "comment not found", http.StatusNotFound)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comment)
 }
 
 func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
@@ -126,16 +115,13 @@ func (h *CommentHandler) DeleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	for i, c := range h.comments {
-		if c.Id == id {
-			h.comments = append(h.comments[:i], h.comments[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	if err := h.db.Delete(&models.Comment{}, id).Error; err == gorm.ErrRecordNotFound {
+		http.Error(w, "comment not found", http.StatusNotFound)
+		return
+	} else if err != nil {
+		http.Error(w, "error deleting comment", http.StatusInternalServerError)
+		return
 	}
 
-	http.Error(w, "comment not found", http.StatusNotFound)
+	w.WriteHeader(http.StatusNoContent)
 }

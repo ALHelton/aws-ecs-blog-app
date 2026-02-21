@@ -24,19 +24,19 @@ func (s *Server) RegisterRoutes() http.Handler {
 	healthHandler := handlers.NewHealthHandler()
 	r.Get("/", healthHandler.HelloWorld)
 
-	commentHandler := handlers.NewCommentHandler()
-	r.Get("/comments", commentHandler.GetComments)
-	r.Get("/comments/{id}", commentHandler.GetComment)
-	r.Post("/comments", commentHandler.CreateComment)
-	r.Put("/comments/{id}", commentHandler.UpdateComment)
-	r.Delete("/comments/{id}", commentHandler.DeleteComment)
-
-	blogPostHandler := handlers.NewBlogPostHandler()
+	blogPostHandler := handlers.NewBlogPostHandler(s.db)
 	r.Get("/blog_posts", blogPostHandler.GetBlogPosts)
 	r.Get("/blog_posts/{id}", blogPostHandler.GetBlogPost)
 	r.Post("/blog_posts", blogPostHandler.CreateBlogPost)
 	r.Put("/blog_posts/{id}", blogPostHandler.UpdateBlogPost)
 	r.Delete("/blog_posts/{id}", blogPostHandler.DeleteBlogPost)
+
+	commentHandler := handlers.NewCommentHandler(s.db)
+	r.Get("/comments", commentHandler.GetComments)
+	r.Get("/comments/{id}", commentHandler.GetComment)
+	r.Post("/comments", commentHandler.CreateComment)
+	r.Put("/comments/{id}", commentHandler.UpdateComment)
+	r.Delete("/comments/{id}", commentHandler.DeleteComment)
 
 	return r
 }
