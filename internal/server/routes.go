@@ -1,8 +1,7 @@
 package server
 
 import (
-	"encoding/json"
-	"log"
+	"aws-ecs-blog-app/internal/handlers"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -16,25 +15,28 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
-	r.Get("/", s.HelloWorldHandler)
+	healthHandler := handlers.NewHealthHandler()
+	r.Get("/", healthHandler.HelloWorld)
+
+	commentHandler := handlers.NewCommentHandler()
+	r.Get("/comments", commentHandler.GetComments)
+	r.Get("/comments/{id}", commentHandler.GetComment)
+	r.Post("/comments", commentHandler.CreateComment)
+	r.Put("/comments/{id}", commentHandler.UpdateComment)
+	r.Delete("/comments/{id}", commentHandler.DeleteComment)
+
+	blogPostHandler := handlers.NewBlogPostHandler()
+	r.Get("/blog_posts", blogPostHandler.GetBlogPosts)
+	r.Get("/blog_posts/{id}", blogPostHandler.GetBlogPost)
+	r.Post("/blog_posts", blogPostHandler.CreateBlogPost)
+	r.Put("/blog_posts/{id}", blogPostHandler.UpdateBlogPost)
+	r.Delete("/blog_posts/{id}", blogPostHandler.DeleteBlogPost)
 
 	return r
-}
-
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
 }
