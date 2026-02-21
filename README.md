@@ -48,7 +48,7 @@ FROM golang:1.26.0-alpine AS builder
 RUN apk add --no-cache git
 
 # Set the working directory
-WORKDIR /deploy_test
+WORKDIR /aws-ecs-blog-app
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
@@ -67,7 +67,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy the binary from the builder
-COPY --from=builder /deploy_test/main .
+COPY --from=builder /aws-ecs-blog-app/main .
 
 # Expose port
 EXPOSE 8080
@@ -82,7 +82,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /deploy_test/main .
+COPY --from=builder /aws-ecs-blog-app/main .
 
 EXPOSE 8080
 
