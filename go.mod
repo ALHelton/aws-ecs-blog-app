@@ -1,4 +1,4 @@
-module deploy_test
+module aws-ecs-blog-app
 
 go 1.25.0
 
