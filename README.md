@@ -2,6 +2,8 @@
 
 A Go blog API with two models (BlogPost and Comment) in a one-to-many relationship. Containerized with Docker and deployed to AWS ECS via Fargate with Amazon RDS (PostgreSQL).
 
+TODO: Add load balancer
+
 ## Tech Stack
 
 - Go with Chi router
